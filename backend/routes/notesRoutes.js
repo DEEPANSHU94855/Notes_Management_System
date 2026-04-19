@@ -9,7 +9,7 @@ router.get("/", async (req, res) => {
     const notes = await Note.find(); // Fetch all notes from database
     res.json(notes); // Send notes back to frontend
   } catch (error) {
-    res.status(500).json({ message: "Error fetching notes" });
+    res.status(500).json({ message: "Error fetching notes", error: error.message });
   }
 });
 
@@ -26,7 +26,7 @@ router.post("/", async (req, res) => {
     await newNote.save();
     res.json(newNote); // Send the saved note back
   } catch (error) {
-    res.status(500).json({ message: "Error saving note" });
+    res.status(500).json({ message: "Error saving note", error: error.message });
   }
 });
 
@@ -37,7 +37,7 @@ router.delete("/:id", async (req, res) => {
     await Note.findByIdAndDelete(req.params.id);
     res.json({ message: "Note deleted successfully!" });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting note" });
+    res.status(500).json({ message: "Error deleting note", error: error.message });
   }
 });
 
