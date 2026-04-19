@@ -26,14 +26,7 @@ mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/notesApp")
 // Routes
 app.use("/api/notes", notesRoutes); // Any request to /api/notes goes to notesRoutes
 
-// Serve frontend in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "../frontend", "dist", "index.html"));
-  });
-}
 
 // Start Server
 const PORT = 5000;
