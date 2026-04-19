@@ -1,0 +1,28 @@
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import notesRoutes from "./routes/notesRoutes.js";
+
+// Load environment variables (like Database URL)
+dotenv.config();
+
+const app = express();
+
+// Middlewares
+app.use(cors()); // Allows frontend to talk to backend
+app.use(express.json()); // Allows server to understand JSON data
+
+// Database Connection
+mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/notesApp")
+  .then(() => console.log("MongoDB Connected Successfully!"))
+  .catch((err) => console.log("Database connection error:", err));
+
+// Routes
+app.use("/api/notes", notesRoutes); // Any request to /api/notes goes to notesRoutes
+
+// Start Server
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
