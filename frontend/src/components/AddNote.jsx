@@ -15,7 +15,7 @@ function AddNote({ refreshNotes }) {
 
     try {
       // Send data to backend
-      await axios.post('http://localhost:5000/api/notes', {
+      await axios.post('/api/notes', {
         title: title,
         content: content
       });

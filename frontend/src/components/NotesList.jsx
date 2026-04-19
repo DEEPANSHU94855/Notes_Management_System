@@ -6,7 +6,7 @@ function NotesList({ notes, refreshNotes }) {
   const handleDelete = async (id) => {
     try {
       // Tell backend to delete the note with this specific ID
-      await axios.delete(`http://localhost:5000/api/notes/${id}`);
+      await axios.delete(`/api/notes/${id}`);
       
       // Refresh the list after successful deletion
       refreshNotes();
