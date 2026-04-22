@@ -1,5 +1,5 @@
 :root {
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
 }
 
 * {
@@ -8,18 +8,18 @@
 
 body {
   margin: 0;
-  background: #f4f6fb;
-  color: #1f2937;
+  background: #efefef;
+  color: #111111;
 }
 
 .app-container {
   max-width: 850px;
   margin: 28px auto;
-  padding: 22px;
+  padding: 24px;
   background: #ffffff;
-  border: 1px solid #e6e9ef;
+  border: 1px solid #e5e5e5;
   border-radius: 14px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 }
 
 h1 {
@@ -29,7 +29,7 @@ h1 {
 
 .subtitle {
   margin: 0 0 16px;
-  color: #6b7280;
+  color: #333333;
 }
 
 .add-note-form {
@@ -49,31 +49,40 @@ input,
 textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #d8deea;
+  border: 1px solid #e5e5e5;
   border-radius: 10px;
+  background: #ffffff;
+  color: #111111;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 input:focus,
 textarea:focus {
-  outline: 2px solid #93c5fd;
-  border-color: #60a5fa;
+  outline: none;
+  border-color: #111111;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
 }
 
 button {
-  border: none;
+  border: 1px solid #111111;
   border-radius: 10px;
   padding: 10px 16px;
   cursor: pointer;
-  color: #fff;
-  background: #3b82f6;
+  color: #ffffff;
+  background: #111111;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.2px;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 button:hover {
-  background: #2563eb;
+  background: #222222;
+  transform: scale(1.05);
+}
+
+button:active {
+  transform: scale(0.98);
 }
 
 button:disabled {
@@ -89,7 +98,7 @@ button:disabled {
 }
 
 .toolbar span {
-  color: #6b7280;
+  color: #222222;
   font-size: 14px;
   min-width: 70px;
 }
@@ -98,21 +107,31 @@ button:disabled {
   margin: 0 0 14px;
   padding: 10px 12px;
   border-radius: 10px;
-  color: #9f1239;
-  background: #ffe4e6;
+  color: #111111;
+  background: #ececec;
+  border: 1px solid #e5e5e5;
 }
 
 .notes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
 .note-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e5e5;
   border-radius: 12px;
-  padding: 12px;
-  background: #fafbff;
+  padding: 16px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s ease;
+  animation: fadeIn 0.18s ease;
+  will-change: transform;
+}
+
+.note-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
 }
 
 .note-card h3 {
@@ -122,8 +141,17 @@ button:disabled {
 
 .note-card p {
   margin: 0 0 10px;
-  color: #374151;
+  color: #222222;
   white-space: pre-wrap;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.note-date {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #444444;
 }
 
 .actions {
@@ -137,27 +165,27 @@ button:disabled {
 }
 
 .actions .secondary {
-  background: #6b7280;
+  background: #2b2b2b;
 }
 
 .actions .secondary:hover {
-  background: #4b5563;
+  background: #3a3a3a;
 }
 
 .actions .danger {
-  background: #ef4444;
+  background: #111111;
 }
 
 .actions .danger:hover {
-  background: #dc2626;
+  background: #2a2a2a;
 }
 
 .empty-state {
   margin: 0;
   padding: 16px;
   text-align: center;
-  color: #6b7280;
-  border: 1px dashed #cfd7e6;
+  color: #222222;
+  border: 1px dashed #cfcfcf;
   border-radius: 10px;
 }
 
@@ -165,6 +193,17 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 600px) {

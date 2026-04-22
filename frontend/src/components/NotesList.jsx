@@ -24,12 +24,19 @@ function NotesList({ notes, isLoading, onDelete, onUpdate }) {
     }
   };
 
+  const formatDate = (value) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString();
+  };
+
   if (isLoading) {
     return <p className="empty-state">Loading notes...</p>;
   }
 
   if (notes.length === 0) {
-    return <p className="empty-state">No notes found. Create your first note.</p>;
+    return <p className="empty-state">No notes yet. Start writing something ✍️</p>;
   }
 
   return (
@@ -56,6 +63,7 @@ function NotesList({ notes, isLoading, onDelete, onUpdate }) {
           ) : (
             <>
               <h3>{note.title}</h3>
+              {note.createdAt ? <small className="note-date">{formatDate(note.createdAt)}</small> : null}
               <p>{note.content}</p>
               <div className="actions">
                 <button type="button" onClick={() => startEdit(note)}>Edit</button>
