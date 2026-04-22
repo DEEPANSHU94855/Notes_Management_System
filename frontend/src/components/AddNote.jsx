@@ -1,53 +1,39 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { memo, useState } from "react";
 
-function AddNote({ onAdd }) {
+function AddNote({ onAdd, isSubmitting }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); // Stop page refresh
-
-    if (!title || !content) {
-      alert("Please fill both fields");
-      return;
-    }
-
-    try {
-      // Send data to backend
-      const response = await axios.post('/api/notes', {
-        title: title,
-        content: content
-      });
-
-      // Clear the input boxes instantly for UI responsiveness
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const success = await onAdd({ title, content });
+    if (success) {
       setTitle("");
       setContent("");
-
-      // Refresh locally in App completely skipping the Server roundtrip
-      onAdd(response.data); 
-    } catch (error) {
-      console.error("Error adding note:", error);
     }
   };
 
   return (
     <form className="add-note-form" onSubmit={handleSubmit}>
-      <input 
-        type="text" 
-        placeholder="Note Title" 
-        value={title} 
-        onChange={(e) => setTitle(e.target.value)} 
+      <input
+        type="text"
+        placeholder="Title"
+        value={title}
+        onChange={(event) => setTitle(event.target.value)}
+        maxLength={80}
       />
-      <textarea 
-        placeholder="Note Content" 
-        value={content} 
-        onChange={(e) => setContent(e.target.value)} 
-        rows="3"
-      ></textarea>
-      <button type="submit">Add Note</button>
+      <textarea
+        placeholder="Write your note..."
+        value={content}
+        onChange={(event) => setContent(event.target.value)}
+        rows="4"
+        maxLength={1500}
+      />
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Saving..." : "Add Note"}
+      </button>
     </form>
   );
 }
 
-export default AddNote;
+export default memo(AddNote);

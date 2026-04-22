@@ -3,48 +3,61 @@ import Note from "../models/Note.js";
 
 const router = express.Router();
 
-// 1. GET ALL NOTES
 router.get("/", async (req, res) => {
   try {
-    const notes = await Note.find().lean(); // Fetch all notes from database (lean for performance)
-    res.json(notes); // Send notes back to frontend
+    const q = (req.query.q || "").trim();
+    const filter = q
+      ? {
+          $or: [
+            { title: { $regex: q, $options: "i" } },
+            { content: { $regex: q, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const notes = await Note.find(filter).sort({ updatedAt: -1 }).lean();
+    res.json(notes);
   } catch (error) {
     res.status(500).json({ message: "Error fetching notes", error: error.message });
   }
 });
 
-// 2. ADD A NEW NOTE
 router.post("/", async (req, res) => {
   try {
-    // Create a new Note using the data sent from frontend (req.body)
-    const newNote = new Note({
-      title: req.body.title,
-      content: req.body.content
-    });
-    
-    // Save it to MongoDB
+    const title = req.body.title?.trim();
+    const content = req.body.content?.trim();
+    if (!title || !content) {
+      return res.status(400).json({ message: "Title and content are required." });
+    }
+
+    const newNote = new Note({ title, content });
     await newNote.save();
-    res.json(newNote); // Send the saved note back
+    res.status(201).json(newNote);
   } catch (error) {
     res.status(500).json({ message: "Error saving note", error: error.message });
   }
 });
 
-// 3. DELETE A NOTE
 router.delete("/:id", async (req, res) => {
   try {
-    // Find note by ID from URL and delete it
-    await Note.findByIdAndDelete(req.params.id);
-    res.json({ message: "Note deleted successfully!" });
+    const deleted = await Note.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+    res.json({ message: "Note deleted successfully." });
   } catch (error) {
     res.status(500).json({ message: "Error deleting note", error: error.message });
   }
 });
 
-// 4. UPDATE A NOTE (PUT)
 router.put("/:id", async (req, res) => {
   try {
-    const { title, content } = req.body;
+    const title = req.body.title?.trim();
+    const content = req.body.content?.trim();
+    if (!title || !content) {
+      return res.status(400).json({ message: "Title and content are required." });
+    }
+
     const updatedNote = await Note.findByIdAndUpdate(
       req.params.id,
       { title, content },
@@ -58,7 +71,5 @@ router.put("/:id", async (req, res) => {
     res.status(500).json({ message: "Error updating note", error: error.message });
   }
 });
-
-
 
 export default router;

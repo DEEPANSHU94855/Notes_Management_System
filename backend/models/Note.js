@@ -1,17 +1,23 @@
 import mongoose from "mongoose";
 
-// Create a schema (blueprint) for the Note
 const noteSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true, // Title is compulsory
+    required: true,
+    trim: true,
+    maxlength: 80,
   },
   content: {
     type: String,
-    required: true, // Content is compulsory
-  }
+    required: true,
+    trim: true,
+    maxlength: 1500,
+  },
+}, {
+  timestamps: true,
 });
 
-// Create and export the model
+noteSchema.index({ updatedAt: -1 });
+
 const Note = mongoose.model("Note", noteSchema);
 export default Note;
