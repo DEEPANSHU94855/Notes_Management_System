@@ -1,19 +1,21 @@
 import express from "express";
 import Note from "../models/Note.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+router.use(authMiddleware);
 
 router.get("/", async (req, res) => {
   try {
     const q = (req.query.q || "").trim();
-    const filter = q
-      ? {
-          $or: [
-            { title: { $regex: q, $options: "i" } },
-            { content: { $regex: q, $options: "i" } },
-          ],
-        }
-      : {};
+    const filter = { user_id: req.userId };
+    if (q) {
+      filter.$or = [
+        { title: { $regex: q, $options: "i" } },
+        { content: { $regex: q, $options: "i" } },
+      ];
+    }
 
     const notes = await Note.find(filter).sort({ updatedAt: -1 }).lean();
     res.json(notes);
@@ -30,7 +32,7 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "Title and content are required." });
     }
 
-    const newNote = new Note({ title, content });
+    const newNote = new Note({ title, content, user_id: req.userId });
     await newNote.save();
     res.status(201).json(newNote);
   } catch (error) {
@@ -40,7 +42,10 @@ router.post("/", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    const deleted = await Note.findByIdAndDelete(req.params.id);
+    const deleted = await Note.findOneAndDelete({
+      _id: req.params.id,
+      user_id: req.userId,
+    });
     if (!deleted) {
       return res.status(404).json({ message: "Note not found" });
     }
@@ -58,8 +63,8 @@ router.put("/:id", async (req, res) => {
       return res.status(400).json({ message: "Title and content are required." });
     }
 
-    const updatedNote = await Note.findByIdAndUpdate(
-      req.params.id,
+    const updatedNote = await Note.findOneAndUpdate(
+      { _id: req.params.id, user_id: req.userId },
       { title, content },
       { new: true, runValidators: true }
     );

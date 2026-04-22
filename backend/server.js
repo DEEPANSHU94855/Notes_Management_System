@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import notesRoutes from "./routes/notesRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 // Load environment variables (like Database URL)
 dotenv.config();
@@ -21,6 +22,10 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+// Keep simple route names and /api-prefixed routes both available.
+app.use("/", authRoutes);
+app.use("/api", authRoutes);
+app.use("/notes", notesRoutes);
 app.use("/api/notes", notesRoutes);
 
 
