@@ -21,15 +21,20 @@ function App() {
     }
   };
 
+  // Instant UI Update Functions
+  const handleNoteAdded = (newNote) => setNotes(prev => [...prev, newNote]);
+  const handleNoteDeleted = (id) => setNotes(prev => prev.filter(n => n._id !== id));
+  const handleNoteUpdated = (updatedNote) => setNotes(prev => prev.map(n => n._id === updatedNote._id ? updatedNote : n));
+
   return (
     <div className="app-container">
       <h1>📒 My Notes App</h1>
       
-      {/* Pass fetchNotes so AddNote can refresh the list after adding */}
-      <AddNote refreshNotes={fetchNotes} />
-      
-      {/* Pass notes and fetchNotes so NotesList can display and delete */}
-      <NotesList notes={notes} refreshNotes={fetchNotes} />
+      {/* Pass handleNoteAdded for Instant UI Update */}
+      <AddNote onAdd={handleNoteAdded} />
+
+       {/* Pass handlers for delete and update */}
+       <NotesList notes={notes} onDelete={handleNoteDeleted} onUpdate={handleNoteUpdated} />
     </div>
   );
 }

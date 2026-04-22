@@ -6,7 +6,7 @@ const router = express.Router();
 // 1. GET ALL NOTES
 router.get("/", async (req, res) => {
   try {
-    const notes = await Note.find(); // Fetch all notes from database
+    const notes = await Note.find().lean(); // Fetch all notes from database (lean for performance)
     res.json(notes); // Send notes back to frontend
   } catch (error) {
     res.status(500).json({ message: "Error fetching notes", error: error.message });
@@ -40,5 +40,25 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ message: "Error deleting note", error: error.message });
   }
 });
+
+// 4. UPDATE A NOTE (PUT)
+router.put("/:id", async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const updatedNote = await Note.findByIdAndUpdate(
+      req.params.id,
+      { title, content },
+      { new: true, runValidators: true }
+    );
+    if (!updatedNote) {
+      return res.status(404).json({ message: "Note not found" });
+    }
+    res.json(updatedNote);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating note", error: error.message });
+  }
+});
+
+
 
 export default router;

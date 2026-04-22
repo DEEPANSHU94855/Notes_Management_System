@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-function AddNote({ refreshNotes }) {
+function AddNote({ onAdd }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
@@ -15,17 +15,17 @@ function AddNote({ refreshNotes }) {
 
     try {
       // Send data to backend
-      await axios.post('/api/notes', {
+      const response = await axios.post('/api/notes', {
         title: title,
         content: content
       });
 
-      // Clear the input boxes
+      // Clear the input boxes instantly for UI responsiveness
       setTitle("");
       setContent("");
 
-      // Refresh the notes list in App.jsx
-      refreshNotes(); 
+      // Refresh locally in App completely skipping the Server roundtrip
+      onAdd(response.data); 
     } catch (error) {
       console.error("Error adding note:", error);
     }
