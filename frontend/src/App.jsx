@@ -1,218 +1,129 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import AddNote from "./components/AddNote";
 import NotesList from "./components/NotesList";
 import api from "./api/client";
 import "./App.css";
 
-const DELETE_COMMIT_DELAY = 4000;
-
 function App() {
   const [notes, setNotes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [query, setQuery] = useState("");
-  const [viewMode, setViewMode] = useState("grid");
   const [error, setError] = useState("");
-  const [pendingDelete, setPendingDelete] = useState(null);
-
-  const hasFetched = useRef(false);
-  const deleteTimerRef = useRef(null);
-
-  const fetchNotes = useCallback(async () => {
-    setIsLoading(true);
-    setError("");
-    try {
-      const response = await api.get("/api/notes");
-      setNotes(response.data);
-    } catch (fetchError) {
-      setError(fetchError?.response?.data?.message || "Unable to load notes.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-    fetchNotes();
-  }, [fetchNotes]);
-
-  useEffect(() => {
-    return () => {
-      if (deleteTimerRef.current) {
-        clearTimeout(deleteTimerRef.current);
+    const fetchNotes = async () => {
+      try {
+        const response = await api.get("/api/notes");
+        setNotes(response.data);
+      } catch (err) {
+        setError(err?.response?.data?.message || "Failed to load notes.");
+      } finally {
+        setIsLoading(false);
       }
     };
+
+    fetchNotes();
   }, []);
 
-  const filteredNotes = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return notes;
-    return notes.filter(
-      (note) =>
-        note.title.toLowerCase().includes(normalizedQuery) ||
-        note.content.toLowerCase().includes(normalizedQuery),
-    );
-  }, [notes, query]);
-
-  const handleAddNote = useCallback(async ({ title, content }) => {
+  const handleAddNote = async ({ title, content }) => {
     const trimmedTitle = title.trim();
     const trimmedContent = content.trim();
+
     if (!trimmedTitle || !trimmedContent) {
-      setError("Please provide both a title and content.");
+      setError("Please enter both title and note.");
       return false;
     }
 
-    setError("");
-    setIsCreating(true);
-
-    const optimisticId = `temp-${Date.now()}`;
-    const optimisticNote = {
-      _id: optimisticId,
-      title: trimmedTitle,
-      content: trimmedContent,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      optimistic: true,
-    };
-
-    setNotes((prev) => [optimisticNote, ...prev]);
-
     try {
+      setError("");
+      setIsSubmitting(true);
       const response = await api.post("/api/notes", {
         title: trimmedTitle,
         content: trimmedContent,
       });
-
-      setNotes((prev) =>
-        prev.map((note) => (note._id === optimisticId ? response.data : note)),
-      );
+      setNotes((prev) => [response.data, ...prev]);
       return true;
-    } catch (createError) {
-      setNotes((prev) => prev.filter((note) => note._id !== optimisticId));
-      setError(createError?.response?.data?.message || "Failed to add note.");
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to add note.");
       return false;
     } finally {
-      setIsCreating(false);
+      setIsSubmitting(false);
     }
-  }, []);
+  };
 
-  const handleUpdateNote = useCallback(async (id, payload) => {
-    const previousNote = notes.find((note) => note._id === id);
-    if (!previousNote) return;
+  const handleUpdateNote = async (id, payload) => {
+    const trimmedTitle = payload.title.trim();
+    const trimmedContent = payload.content.trim();
 
-    const updatedOptimistic = {
-      ...previousNote,
-      ...payload,
-      updatedAt: new Date().toISOString(),
-    };
-    setNotes((prev) => prev.map((note) => (note._id === id ? updatedOptimistic : note)));
+    if (!trimmedTitle || !trimmedContent) {
+      setError("Title and note cannot be empty.");
+      return false;
+    }
 
     try {
-      const response = await api.put(`/api/notes/${id}`, payload);
-      setNotes((prev) => prev.map((note) => (note._id === id ? response.data : note)));
       setError("");
-    } catch (updateError) {
-      setNotes((prev) => prev.map((note) => (note._id === id ? previousNote : note)));
-      setError(updateError?.response?.data?.message || "Failed to update note.");
+      const response = await api.put(`/api/notes/${id}`, {
+        title: trimmedTitle,
+        content: trimmedContent,
+      });
+      setNotes((prev) => prev.map((note) => (note._id === id ? response.data : note)));
+      return true;
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to update note.");
+      return false;
     }
-  }, [notes]);
+  };
 
-  const commitDelete = useCallback(async (noteToDelete) => {
+  const handleDeleteNote = async (id) => {
+    const confirmed = window.confirm("Are you sure you want to delete this note?");
+    if (!confirmed) {
+      return;
+    }
+
     try {
-      await api.delete(`/api/notes/${noteToDelete._id}`);
-    } catch (deleteError) {
-      // Restore if delete failed on server.
-      setNotes((prev) => [noteToDelete, ...prev]);
-      setError(deleteError?.response?.data?.message || "Delete failed. Note restored.");
-    } finally {
-      setPendingDelete(null);
-      deleteTimerRef.current = null;
+      setError("");
+      await api.delete(`/api/notes/${id}`);
+      setNotes((prev) => prev.filter((note) => note._id !== id));
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to delete note.");
     }
-  }, []);
+  };
 
-  const handleDeleteRequest = useCallback((id) => {
-    const noteToDelete = notes.find((note) => note._id === id);
-    if (!noteToDelete) return;
-
-    if (deleteTimerRef.current) {
-      clearTimeout(deleteTimerRef.current);
-    }
-
-    setNotes((prev) => prev.filter((note) => note._id !== id));
-    setPendingDelete(noteToDelete);
-
-    deleteTimerRef.current = setTimeout(() => {
-      commitDelete(noteToDelete);
-    }, DELETE_COMMIT_DELAY);
-  }, [commitDelete, notes]);
-
-  const handleUndoDelete = useCallback(() => {
-    if (!pendingDelete) return;
-    if (deleteTimerRef.current) {
-      clearTimeout(deleteTimerRef.current);
-      deleteTimerRef.current = null;
-    }
-    setNotes((prev) => [pendingDelete, ...prev]);
-    setPendingDelete(null);
-  }, [pendingDelete]);
+  const filteredNotes = notes.filter((note) => {
+    const lowerQuery = query.toLowerCase();
+    return (
+      note.title.toLowerCase().includes(lowerQuery) ||
+      note.content.toLowerCase().includes(lowerQuery)
+    );
+  });
 
   return (
-    <div className="page-shell">
-      <main className="app-container">
-        <section className="top-bar">
-          <div>
-            <p className="eyebrow">Notes Management</p>
-            <h1>Capture ideas instantly</h1>
-          </div>
-          <div className="view-toggle">
-            <button
-              className={viewMode === "grid" ? "active" : ""}
-              type="button"
-              onClick={() => setViewMode("grid")}
-            >
-              Grid
-            </button>
-            <button
-              className={viewMode === "list" ? "active" : ""}
-              type="button"
-              onClick={() => setViewMode("list")}
-            >
-              List
-            </button>
-          </div>
-        </section>
+    <main className="app-container">
+      <h1>Notes Management System</h1>
+      <p className="subtitle">Create, edit and manage your notes easily.</p>
 
-        <AddNote onAdd={handleAddNote} isSubmitting={isCreating} />
+      <AddNote onAdd={handleAddNote} isSubmitting={isSubmitting} />
 
-        <div className="toolbar">
-          <input
-            type="search"
-            value={query}
-            placeholder="Search notes..."
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <span>{filteredNotes.length} notes</span>
-        </div>
-
-        {error ? <p className="error-banner">{error}</p> : null}
-
-        <NotesList
-          notes={filteredNotes}
-          isLoading={isLoading}
-          viewMode={viewMode}
-          onDelete={handleDeleteRequest}
-          onUpdate={handleUpdateNote}
+      <div className="toolbar">
+        <input
+          type="search"
+          value={query}
+          placeholder="Search notes..."
+          onChange={(event) => setQuery(event.target.value)}
         />
+        <span>{filteredNotes.length} notes</span>
+      </div>
 
-        {pendingDelete ? (
-          <div className="undo-toast" role="status" aria-live="polite">
-            <span>Note deleted.</span>
-            <button type="button" onClick={handleUndoDelete}>Undo</button>
-          </div>
-        ) : null}
-      </main>
-    </div>
+      {error ? <p className="error-banner">{error}</p> : null}
+
+      <NotesList
+        notes={filteredNotes}
+        isLoading={isLoading}
+        onDelete={handleDeleteNote}
+        onUpdate={handleUpdateNote}
+      />
+    </main>
   );
 }
 

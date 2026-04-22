@@ -1,4 +1,4 @@
-import React, { memo, useState } from "react";
+import React, { useState } from "react";
 
 function AddNote({ onAdd, isSubmitting }) {
   const [title, setTitle] = useState("");
@@ -36,4 +36,4 @@ function AddNote({ onAdd, isSubmitting }) {
   );
 }
 
-export default memo(AddNote);
+export default AddNote;

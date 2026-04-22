@@ -1,6 +1,6 @@
-import React, { memo, useState } from "react";
+import React, { useState } from "react";
 
-function NotesList({ notes, isLoading, viewMode, onDelete, onUpdate }) {
+function NotesList({ notes, isLoading, onDelete, onUpdate }) {
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
@@ -18,18 +18,14 @@ function NotesList({ notes, isLoading, viewMode, onDelete, onUpdate }) {
   };
 
   const saveEdit = async (id) => {
-    await onUpdate(id, { title: editTitle.trim(), content: editContent.trim() });
-    cancelEdit();
+    const ok = await onUpdate(id, { title: editTitle, content: editContent });
+    if (ok) {
+      cancelEdit();
+    }
   };
 
   if (isLoading) {
-    return (
-      <div className="notes-grid">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="skeleton-card" />
-        ))}
-      </div>
-    );
+    return <p className="empty-state">Loading notes...</p>;
   }
 
   if (notes.length === 0) {
@@ -37,7 +33,7 @@ function NotesList({ notes, isLoading, viewMode, onDelete, onUpdate }) {
   }
 
   return (
-    <div className={viewMode === "list" ? "notes-list" : "notes-grid"}>
+    <div className="notes-grid">
       {notes.map((note) => (
         <article key={note._id} className="note-card">
           {editingId === note._id ? (
@@ -59,10 +55,7 @@ function NotesList({ notes, isLoading, viewMode, onDelete, onUpdate }) {
             </div>
           ) : (
             <>
-              <header className="card-head">
-                <h3>{note.title}</h3>
-                {note.optimistic ? <span className="sync-badge">Syncing...</span> : null}
-              </header>
+              <h3>{note.title}</h3>
               <p>{note.content}</p>
               <div className="actions">
                 <button type="button" onClick={() => startEdit(note)}>Edit</button>
@@ -78,4 +71,4 @@ function NotesList({ notes, isLoading, viewMode, onDelete, onUpdate }) {
   );
 }
 
-export default memo(NotesList);
+export default NotesList;
